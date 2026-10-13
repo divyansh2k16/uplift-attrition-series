@@ -16,7 +16,7 @@ clients get a pricing negotiation.
 | Part | Title | Notebook | Status |
 |---|---|---|---|
 | **Act 1: Foundations** | | | |
-| 1 | What is uplift modelling? Your churn model is answering the wrong question | [`01`](notebooks/01_what_is_uplift_modelling.ipynb) | Notebook ready |
+| 1 | [What is uplift modelling? Your churn model is answering the wrong question](https://medium.com/@divyanshsrivastavaju/your-churn-model-is-answering-the-wrong-question-c1161e57263e) | [`01`](notebooks/01_what_is_uplift_modelling.ipynb) | Published |
 | 2 | The four kinds of clients, and why calling the riskiest ones wastes effort | [`02`](notebooks/02_four_kinds_of_clients.ipynb) | Notebook ready |
 | **Act 2: Building on clean data** | | | |
 | 3 | The data you need: treated, control and the start date | [`03`](notebooks/03_data_you_need.ipynb) | Notebook ready |
