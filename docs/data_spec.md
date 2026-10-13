@@ -91,8 +91,9 @@ Labels in `true_client_type` follow these rules:
 | lost_cause | otherwise, and `p0` of 30% or more |
 | sure_thing | everything else |
 
-A **service fix** lowers churn for clients who have been complaining. It is
-there so Part 3 can show why those clients must not be used as controls.
+A **service fix** lowers churn a little for every client who gets one, and
+most for clients who have been complaining. It is there so Part 3 can show
+why those clients must not be used as controls.
 
 ## Treatment assignment: the switch behind the whole series
 
@@ -145,7 +146,7 @@ seeds; the tests check averages across seeds, not this one draw.
 | Pricing (treated) | 1,000 | 976 |
 | Service fix (excluded) | 1,000 | 1,000 |
 | No action (control) | 4,000 | 4,024 |
-| Churn among flagged | 21.6% | 21.9% |
+| Churn among flagged | 20.8% | 21.0% |
 | Treated churn | 16.0% | 10.6% |
 | Control churn | 23.6% | 25.3% |
 | **Naive uplift** | **7.6 points** | **14.7 points** |
@@ -185,6 +186,30 @@ RMs make 500 pricing calls among the 6,000 flagged clients:
 | Highest true uplift first | 136 | 27 |
 
 The riskiest-first list is 78% lost causes.
+
+## Reference numbers for Parts 3 and 4 (series seed)
+
+Part 3, estimated effect of pricing under three choices of control group
+(true effect 7.7 points):
+
+| Control group | Estimate |
+|---|---|
+| All clients with no pricing | -8.7 points |
+| Flagged clients, including service fix | +5.7 points |
+| Flagged clients with no action | +7.6 points |
+
+Part 3 leakage demo: a churn model's test ROC-AUC is 0.77 with pre-start
+features and 0.996 once the post-start column is added.
+
+Part 4, 300 calls among the 1,500 test clients (T-learner and S-learner use
+`DEFAULT_XGB_PARAMS`):
+
+| Rule | Expected clients saved | Share of best possible |
+|---|---|---|
+| Random | 23 | 36% |
+| Riskiest first | 11 | 18% |
+| T-learner | 42 | 66% |
+| Best possible (true uplift) | 64 | 100% |
 
 ## Using the generator
 

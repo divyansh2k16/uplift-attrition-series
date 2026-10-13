@@ -19,8 +19,8 @@ clients get a pricing negotiation.
 | 1 | What is uplift modelling? Your churn model is answering the wrong question | [`01`](notebooks/01_what_is_uplift_modelling.ipynb) | Notebook ready |
 | 2 | The four kinds of clients, and why calling the riskiest ones wastes effort | [`02`](notebooks/02_four_kinds_of_clients.ipynb) | Notebook ready |
 | **Act 2: Building on clean data** | | | |
-| 3 | The data you need: treated, control and the start date | `03_` | Planned |
-| 4 | Two models, two parallel worlds: your first uplift model | `04_` | Planned |
+| 3 | The data you need: treated, control and the start date | [`03`](notebooks/03_data_you_need.ipynb) | Notebook ready |
+| 4 | Two models, two parallel worlds: your first uplift model | [`04`](notebooks/04_two_models_two_worlds.ipynb) | Notebook ready |
 | 5 | How do you grade a prediction you can never check? | `05_` | Planned |
 | 6 | Why AUC, KS and log loss won't save you here | `06_` | Planned |
 | 7 | From uplift to dollars: stop discounting clients who were never leaving | `07_` | Planned |
@@ -80,8 +80,8 @@ pool = analysis_pool(df)   # flagged clients who got pricing or nothing
 ```
 ├── docs/data_spec.md        how the synthetic bank is generated, and why
 ├── src/uplift_series/       reusable code: data generator, plotting style,
-│                            targeting (models, evaluation and propensity
-│                            code added part by part)
+│                            targeting, uplift models (evaluation and
+│                            propensity code added part by part)
 ├── notebooks/               one notebook per article
 ├── scripts/sanity_report.py headline numbers for the default data
 ├── tests/                   checks that the generator tells the truth

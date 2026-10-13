@@ -208,8 +208,8 @@ def generate_bank(
     pricing_effect = np.where(is_sleeper, -1.0 + effect_noise, pricing_effect)
     p1 = _sigmoid(logit_p0 - pricing_effect)
 
-    # A service fix helps clients who have been complaining.
-    service_effect = 0.6 * np.minimum(complaints_6m, 3)
+    # A service fix helps everyone a little, and complainers the most.
+    service_effect = 0.5 + 0.5 * np.minimum(complaints_6m, 3)
     p_service = _sigmoid(logit_p0 - service_effect)
 
     true_uplift = p0 - p1
