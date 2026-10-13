@@ -23,11 +23,11 @@ clients get a pricing negotiation.
 | 4 | Two models, two parallel worlds: your first uplift model | [`04`](notebooks/04_two_models_two_worlds.ipynb) | Notebook ready |
 | 5 | How do you grade a prediction you can never check? | [`05`](notebooks/05_grading_uplift.ipynb) | Notebook ready |
 | 6 | Why AUC, KS and log loss won't save you here | [`06`](notebooks/06_why_auc_wont_save_you.ipynb) | Notebook ready |
-| 7 | From uplift to dollars: stop discounting clients who were never leaving | `07_` | Planned |
+| 7 | From uplift to dollars: stop discounting clients who were never leaving | [`07`](notebooks/07_uplift_to_dollars.ipynb) | Notebook ready |
 | **Act 3: Causal inference in banking** | | | |
-| 8 | Causal inference 101 for bankers: why your data is lying | `08_` | Planned |
-| 9 | Levelling the playing field: propensity scores without the mystery | `09_` | Planned |
-| 10 | The experiment nobody wanted to run: holdouts, hidden bias and the full pipeline | `10_` | Planned |
+| 8 | Causal inference 101 for bankers: why your data is lying | [`08`](notebooks/08_causal_inference_101.ipynb) | Notebook ready |
+| 9 | Levelling the playing field: propensity scores without the mystery | [`09`](notebooks/09_propensity_scores.ipynb) | Notebook ready |
+| 10 | The experiment nobody wanted to run: holdouts, hidden bias and the full pipeline | [`10`](notebooks/10_holdouts_hidden_bias_pipeline.ipynb) | Notebook ready |
 
 Article links will be added as each part is published.
 
@@ -50,9 +50,18 @@ The generator has a switch:
 | Naive uplift | 7.6 points | 14.7 points |
 | True uplift | 7.7 points | 7.7 points |
 
-And the Act 1 punchline: with 500 calls, calling the riskiest clients first
-saves about 10 clients, picking at random saves about 35, and calling the
-clients with the highest true uplift saves about 136.
+Highlights from the series (series seed, illustrative numbers):
+
+- **Act 1:** with 500 calls, calling the riskiest clients first saves about
+  10 clients, picking at random about 35, and calling the clients with the
+  highest true uplift about 136.
+- **Act 2:** a simple T-learner captures about two-thirds of the best
+  possible gain; ranking by net value makes about $103M against $54M for
+  ranking by uplift, while calling the riskiest first loses money.
+- **Act 3:** when RMs choose, the naive estimate is 14.7 points against a
+  true 7.7; propensity weighting brings it to 7.4. A hidden relationship
+  factor can keep even the weighted estimate at double the truth, and only
+  a random holdout measures the real effect.
 
 Full details are in [docs/data_spec.md](docs/data_spec.md).
 
@@ -79,9 +88,15 @@ pool = analysis_pool(df)   # flagged clients who got pricing or nothing
 
 ```
 ├── docs/data_spec.md        how the synthetic bank is generated, and why
-├── src/uplift_series/       reusable code: data generator, plotting style,
-│                            targeting, uplift models, evaluation
-│                            (propensity code added in Act 3)
+├── src/uplift_series/
+│   ├── data.py              synthetic bank generator (the oracle lives here)
+│   ├── modeling.py          T-learner and S-learner on XGBoost
+│   ├── evaluation.py        uplift by bin, Qini, uplift@k, churn metrics
+│   ├── economics.py         net value, calibration, profit curve
+│   ├── propensity.py        stratification, propensity model, IPW, balance
+│   ├── pipeline.py          one retention cycle end to end, with holdout
+│   ├── targeting.py         top-k selection and clients saved
+│   └── plotting.py          one colour-blind-safe chart style
 ├── notebooks/               one notebook per article
 ├── scripts/sanity_report.py headline numbers for the default data
 ├── tests/                   checks that the generator tells the truth

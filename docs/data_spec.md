@@ -231,6 +231,37 @@ ROC-AUC 0.86 to 0.79, Model 2 0.74 to 0.74) but turns the Qini coefficient
 from 5.0 to -3.6. A churn model on all clients: ROC-AUC 0.77, PR-AUC 0.29
 (base rate 7.5%), KS 0.39, top-decile lift 3.8x.
 
+## Reference numbers for Parts 7 to 10 (series seed)
+
+Part 7, a new cohort (seed 2026), 500 negotiations from 6,000 flagged
+clients, random-world T-learner:
+
+| Rule | True net value | Clients saved |
+|---|---|---|
+| Riskiest first | -$7M | 10 |
+| Highest uplift first | $54M | 77 |
+| Highest net value first | $103M | 49 |
+| Best possible | $175M | 88 |
+
+The model expects $368M for its net-value list; calibrating uplift on the
+holdout bins (slope 0.62) brings that to $186M against a truth of $108M.
+
+Part 8: naive 14.7 points (RMs choose) vs 7.6 (random), truth 7.7. A
+T-learner trained on RM-chosen history has correlation 0.23 with true uplift
+and captures 44% of the best possible gain on 300 calls; trained on
+randomised history, 0.53 and 70%.
+
+Part 9: stratification 8.1 points (206 clients dropped for no overlap),
+IPW 7.4, truth 7.7. A T-learner trained with IPW weights: correlation 0.54,
+75% of the best possible gain.
+
+Part 10: averaged over 8 seeds per setting, the IPW estimate rises from 7.7
+to 16.4 points as `hidden_confounding` goes from 0 to 2, while the truth
+stays near 7.7. The pipeline's 500-client list (404 negotiated, 96 held
+back) has a true uplift of 9.8 points against a predicted 18.3; over 1,000
+replayed cycles the holdout measures 10.5 on average, with 90% of single
+cycles between 3.3 and 18.0.
+
 ## Using the generator
 
 ```python
