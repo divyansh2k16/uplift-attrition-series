@@ -21,8 +21,8 @@ clients get a pricing negotiation.
 | **Act 2: Building on clean data** | | | |
 | 3 | The data you need: treated, control and the start date | [`03`](notebooks/03_data_you_need.ipynb) | Notebook ready |
 | 4 | Two models, two parallel worlds: your first uplift model | [`04`](notebooks/04_two_models_two_worlds.ipynb) | Notebook ready |
-| 5 | How do you grade a prediction you can never check? | `05_` | Planned |
-| 6 | Why AUC, KS and log loss won't save you here | `06_` | Planned |
+| 5 | How do you grade a prediction you can never check? | [`05`](notebooks/05_grading_uplift.ipynb) | Notebook ready |
+| 6 | Why AUC, KS and log loss won't save you here | [`06`](notebooks/06_why_auc_wont_save_you.ipynb) | Notebook ready |
 | 7 | From uplift to dollars: stop discounting clients who were never leaving | `07_` | Planned |
 | **Act 3: Causal inference in banking** | | | |
 | 8 | Causal inference 101 for bankers: why your data is lying | `08_` | Planned |
@@ -80,8 +80,8 @@ pool = analysis_pool(df)   # flagged clients who got pricing or nothing
 ```
 ├── docs/data_spec.md        how the synthetic bank is generated, and why
 ├── src/uplift_series/       reusable code: data generator, plotting style,
-│                            targeting, uplift models (evaluation and
-│                            propensity code added part by part)
+│                            targeting, uplift models, evaluation
+│                            (propensity code added in Act 3)
 ├── notebooks/               one notebook per article
 ├── scripts/sanity_report.py headline numbers for the default data
 ├── tests/                   checks that the generator tells the truth

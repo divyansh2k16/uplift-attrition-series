@@ -211,6 +211,26 @@ Part 4, 300 calls among the 1,500 test clients (T-learner and S-learner use
 | T-learner | 42 | 66% |
 | Best possible (true uplift) | 64 | 100% |
 
+## Reference numbers for Parts 5 and 6 (series seed)
+
+Part 5, T-learner on the 1,500 test clients, five bins (points):
+
+| Bin | Actual uplift | Predicted | True |
+|---|---|---|---|
+| 1 | 10.1 | 22.8 | 14.1 |
+| 2 | 15.5 | 15.0 | 12.1 |
+| 3 | 4.2 | 10.6 | 8.2 |
+| 4 | 0.6 | 4.2 | 3.2 |
+| 5 | -5.2 | -7.3 | 0.2 |
+
+Qini coefficient: T-learner 5.0, riskiest first 1.9. Uplift@20%: T-learner
+10.1 points, riskiest first 6.7 points.
+
+Part 6: removing `pricing_gap` leaves both churn models healthy (Model 1
+ROC-AUC 0.86 to 0.79, Model 2 0.74 to 0.74) but turns the Qini coefficient
+from 5.0 to -3.6. A churn model on all clients: ROC-AUC 0.77, PR-AUC 0.29
+(base rate 7.5%), KS 0.39, top-decile lift 3.8x.
+
 ## Using the generator
 
 ```python
