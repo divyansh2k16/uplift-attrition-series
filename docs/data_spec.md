@@ -77,6 +77,10 @@ on the client:
   an RFP, so churn *rises* (an effect of minus 1 log-odds).
 - Everyone else with low risk and little effect is a **sure thing**.
 
+Every client's effect also carries random variation (normal, standard
+deviation 0.35 log-odds) that the features do not explain, so the data looks
+like real clients rather than a clean formula.
+
 `true_uplift = p0 - p1`, where `p1` is churn probability after pricing.
 Labels in `true_client_type` follow these rules:
 
@@ -129,45 +133,66 @@ Two parameters control the bias:
 stopped transacting. It is included on purpose so Part 3 can show how a
 leaked feature makes a model look perfect and fail in practice.
 
-## Headline numbers (seed 42)
+## Headline numbers (series seed 54)
 
-Produced by `python scripts/sanity_report.py`.
+Produced by `python scripts/sanity_report.py`. The series uses
+`SERIES_SEED = 54` because its numbers sit close to the average over many
+seeds; the tests check averages across seeds, not this one draw.
 
 | | Random | RM-biased |
 |---|---|---|
 | Flagged clients | 6,000 | 6,000 |
-| Pricing (treated) | 979 | 962 |
+| Pricing (treated) | 1,000 | 976 |
 | Service fix (excluded) | 1,000 | 1,000 |
-| No action (control) | 4,021 | 4,038 |
-| Churn among flagged | 20.6% | 20.9% |
-| Treated churn | 14.2% | 8.4% |
-| Control churn | 23.0% | 24.7% |
-| **Naive uplift** | **8.8 points** | **16.3 points** |
-| **True average uplift** | **8.0 points** | **8.0 points** |
-| True no-action risk, treated vs control | 23.4% vs 23.6% | 16.2% vs 25.3% |
+| No action (control) | 4,000 | 4,024 |
+| Churn among flagged | 21.6% | 21.9% |
+| Treated churn | 16.0% | 10.6% |
+| Control churn | 23.6% | 25.3% |
+| **Naive uplift** | **7.6 points** | **14.7 points** |
+| **True average uplift** | **7.7 points** | **7.7 points** |
+| True no-action risk, treated vs control | 24.5% vs 23.8% | 17.4% vs 25.5% |
 
-Client types among flagged clients: persuadable 61%, sure thing 20%, lost
-cause 13%, sleeping dog 6%.
+Client types among flagged clients: persuadable 60%, sure thing 18%, lost
+cause 13%, sleeping dog 9%.
 
-In the random world, the naive estimate is close to the truth. In the
-RM-biased world it roughly doubles it, because RMs chose clients whose
-no-action churn risk was 16% instead of 25%. That gap is the illusion Part 8
-reveals and Part 9 corrects.
+In the random world, the naive estimate matches the truth. In the RM-biased
+world it roughly doubles it, because RMs chose clients whose no-action churn
+risk was 17% instead of 26%. That gap is the illusion Part 8 reveals and
+Part 9 corrects.
 
-Checks run during development (20 seeds each, default settings) found that
-weighting by an estimated propensity on observed features brings the
-RM-biased estimate down from about 16 points to about 10 points against a
-truth of about 8. The remaining gap comes from the hidden relationship, which
-is the subject of Part 10. With `hidden_confounding=0`, weighting recovers
-the truth to within about a point.
+Checks run during development (20 seeds each, propensity estimated with a
+logistic regression on observed features, then inverse probability
+weighting):
+
+| Setting | Naive | After weighting | Truth |
+|---|---|---|---|
+| Default (`hidden_confounding=0.5`) | 15.7 | 8.2 | 7.8 |
+| No hidden confounding (`0.0`) | 14.6 | 7.4 | 7.5 |
+| Strong hidden confounding (`1.5`) | 19.3 | 13.0 | 7.8 |
+
+With the defaults, weighting on observed features removes almost all of the
+bias, which is the result Part 9 builds on. Part 10 raises
+`hidden_confounding` to show what weighting cannot fix.
+
+## Targeting example used in Part 2 (series seed)
+
+RMs make 500 pricing calls among the 6,000 flagged clients:
+
+| Rule | Expected clients saved | Per 100 calls |
+|---|---|---|
+| Random | 35 | 7 |
+| Riskiest first (churn score) | 10 | 2 |
+| Highest true uplift first | 136 | 27 |
+
+The riskiest-first list is 78% lost causes.
 
 ## Using the generator
 
 ```python
 from uplift_series import generate_bank, analysis_pool, observed_view
 
-df = generate_bank(assignment="random", seed=42)   # Act 2
-df = generate_bank(assignment="rm_biased", seed=42)  # Act 3
+df = generate_bank(assignment="random")     # Act 2 (series seed by default)
+df = generate_bank(assignment="rm_biased")  # Act 3
 pool = analysis_pool(df)        # flagged clients with pricing or no action
 seen = observed_view(df)        # without oracle columns
 live = generate_bank(seed=2026)  # a new cohort for "this cycle" in Part 7

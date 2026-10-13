@@ -16,8 +16,8 @@ clients get a pricing negotiation.
 | Part | Title | Notebook | Status |
 |---|---|---|---|
 | **Act 1: Foundations** | | | |
-| 1 | What is uplift modelling? Your churn model is answering the wrong question | `01_` | Planned |
-| 2 | The four kinds of clients, and why calling the riskiest ones wastes effort | `02_` | Planned |
+| 1 | What is uplift modelling? Your churn model is answering the wrong question | [`01`](notebooks/01_what_is_uplift_modelling.ipynb) | Notebook ready |
+| 2 | The four kinds of clients, and why calling the riskiest ones wastes effort | [`02`](notebooks/02_four_kinds_of_clients.ipynb) | Notebook ready |
 | **Act 2: Building on clean data** | | | |
 | 3 | The data you need: treated, control and the start date | `03_` | Planned |
 | 4 | Two models, two parallel worlds: your first uplift model | `04_` | Planned |
@@ -45,10 +45,14 @@ The generator has a switch:
   estimate roughly doubles the true effect, and causal inference is needed to
   correct it.
 
-| Seed 42 | Random | RM-biased |
+| Series seed | Random | RM-biased |
 |---|---|---|
-| Naive uplift | 8.8 points | 16.3 points |
-| True uplift | 8.0 points | 8.0 points |
+| Naive uplift | 7.6 points | 14.7 points |
+| True uplift | 7.7 points | 7.7 points |
+
+And the Act 1 punchline: with 500 calls, calling the riskiest clients first
+saves about 10 clients, picking at random saves about 35, and calling the
+clients with the highest true uplift saves about 136.
 
 Full details are in [docs/data_spec.md](docs/data_spec.md).
 
@@ -67,7 +71,7 @@ python scripts/sanity_report.py  # prints the headline numbers
 ```python
 from uplift_series import generate_bank, analysis_pool
 
-df = generate_bank(assignment="rm_biased", seed=42)
+df = generate_bank(assignment="rm_biased")
 pool = analysis_pool(df)   # flagged clients who got pricing or nothing
 ```
 
@@ -75,8 +79,9 @@ pool = analysis_pool(df)   # flagged clients who got pricing or nothing
 
 ```
 ├── docs/data_spec.md        how the synthetic bank is generated, and why
-├── src/uplift_series/       reusable code (data generator now; models,
-│                            evaluation and propensity code added part by part)
+├── src/uplift_series/       reusable code: data generator, plotting style,
+│                            targeting (models, evaluation and propensity
+│                            code added part by part)
 ├── notebooks/               one notebook per article
 ├── scripts/sanity_report.py headline numbers for the default data
 ├── tests/                   checks that the generator tells the truth

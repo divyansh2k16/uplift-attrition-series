@@ -64,6 +64,10 @@ ORACLE_COLUMNS = [
     "true_propensity",
 ]
 
+#: Seed used throughout the series. Chosen because its headline numbers sit
+#: close to the average over many seeds (tests check the averages).
+SERIES_SEED = 54
+
 SEGMENTS = ["large_corporate", "mid_market", "commercial"]
 CYCLE_DATES = pd.to_datetime(["2025-01-01", "2025-04-01", "2025-07-01", "2025-10-01"])
 OUTCOME_WINDOW_MONTHS = 6
@@ -125,7 +129,7 @@ def generate_bank(
     hidden_confounding: float = 0.5,
     selection_strength: float = 0.7,
     base_churn_rate: float = 0.08,
-    seed: int = 42,
+    seed: int = SERIES_SEED,
 ) -> pd.DataFrame:
     """Generate one cohort of synthetic institutional clients.
 
@@ -192,13 +196,16 @@ def generate_bank(
 
     # ---- 3. Effect of a pricing negotiation (on the log-odds scale) ------
     price_sensitivity = 2.2 * _sigmoid((pricing_gap - 0.04) / 0.03)  # 0 to 2.2
-    pricing_effect = price_sensitivity.copy()
+    # Client-level variation the features do not explain, so the effect is
+    # realistic rather than a clean formula.
+    effect_noise = rng.normal(0, 0.35, n)
+    pricing_effect = price_sensitivity + effect_noise
     # Lost causes: a corporate decision that no price will reverse.
-    pricing_effect = np.where(corporate_event == 1, 0.05, pricing_effect)
+    pricing_effect = np.where(corporate_event == 1, 0.05 + 0.3 * effect_noise, pricing_effect)
     # Sleeping dogs: happy, cheaply priced, not reviewed in years; raising
     # pricing prompts them to run an RFP and shop around.
     is_sleeper = (years_since_price_review >= 5) & (pricing_gap <= 0.0) & (complaints_6m == 0)
-    pricing_effect = np.where(is_sleeper, -1.0, pricing_effect)
+    pricing_effect = np.where(is_sleeper, -1.0 + effect_noise, pricing_effect)
     p1 = _sigmoid(logit_p0 - pricing_effect)
 
     # A service fix helps clients who have been complaining.

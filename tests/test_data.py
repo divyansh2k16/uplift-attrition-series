@@ -13,6 +13,7 @@ import pandas as pd
 import pytest
 
 from uplift_series.data import (
+    SERIES_SEED,
     FEATURES,
     ORACLE_COLUMNS,
     analysis_pool,
@@ -25,12 +26,12 @@ from uplift_series.data import (
 
 @pytest.fixture(scope="module")
 def random_df():
-    return generate_bank(assignment="random", seed=42)
+    return generate_bank(assignment="random", seed=SERIES_SEED)
 
 
 @pytest.fixture(scope="module")
 def biased_df():
-    return generate_bank(assignment="rm_biased", seed=42)
+    return generate_bank(assignment="rm_biased", seed=SERIES_SEED)
 
 
 def test_reproducible():

@@ -10,6 +10,7 @@ generator, rerun this and update docs/data_spec.md.
 """
 
 from uplift_series.data import (
+    SERIES_SEED,
     analysis_pool,
     generate_bank,
     naive_uplift,
@@ -21,7 +22,7 @@ def pct(x):
     return f"{100 * x:5.1f}%"
 
 
-def report(assignment: str, seed: int = 42) -> None:
+def report(assignment: str, seed: int = SERIES_SEED) -> None:
     df = generate_bank(assignment=assignment, seed=seed)
     flagged = df[df["flagged"] == 1]
     pool = analysis_pool(df)
