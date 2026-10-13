@@ -1,0 +1,174 @@
+# Data specification: the synthetic bank
+
+Every article in the series runs on one synthetic dataset produced by
+`uplift_series.data.generate_bank()`. This document explains what is in it,
+how it is generated, and why it is built that way.
+
+All clients, figures and behaviours are invented. The data is not derived
+from, and does not describe, any real bank or client.
+
+## Why synthetic data
+
+Uplift can never be observed for a real client: each client either received
+the intervention or did not. With synthetic data we decide the true effect
+for every client ourselves, so each notebook can check whether a method
+recovers the truth. That is the main reason this series is reproducible and
+checkable.
+
+## The setting
+
+A bank serves 40,000 institutional clients through relationship managers
+(RMs). An existing churn model scores every client each cycle, and the
+riskiest are sent to RMs. RMs can offer a **pricing negotiation** (the
+treatment studied in the series) or a different intervention (a **service
+fix**). The outcome is whether the client leaves within six months.
+
+## Pipeline
+
+| Step | What happens | Default |
+|---|---|---|
+| 1 | Generate client features | 40,000 clients |
+| 2 | Baseline churn probability with no action, `p0` | average 8% over six months |
+| 3 | Pricing changes churn on the log-odds scale, client by client | creates four client types |
+| 4 | Existing churn model flags the riskiest clients | top 6,000 |
+| 5 | Interventions among flagged clients | 1,000 service fix, about 1,000 pricing |
+| 6 | Outcomes drawn from the matching probability | `churned_6m` |
+
+## Features (observed, measured before the start date)
+
+| Column | Meaning | How it is generated |
+|---|---|---|
+| `segment` | large_corporate, mid_market, commercial | 15% / 35% / 50% |
+| `revenue_ttm` | Trailing 12-month revenue (USD) | log-normal; medians 4M / 700K / 150K by segment |
+| `tenure_years` | Years as a client | gamma, plus a nudge from hidden relationship strength |
+| `n_products` | Products held | Poisson, rises with tenure and size |
+| `txn_volume_trend` | Change in transaction volume, last 6 months vs prior 6 | normal(0, 0.15) |
+| `pricing_gap` | How much dearer the bank is than peers (0.05 = 5% dearer) | normal(0.03, 0.07) |
+| `rm_meetings_6m` | RM meetings in the last 6 months | Poisson, rises with hidden relationship strength |
+| `complaints_6m` | Complaints in the last 6 months | Poisson(0.4) |
+| `corporate_event` | Merger or banking consolidation under way | 3% of clients |
+| `years_since_price_review` | Years since pricing was last reviewed | 0 to 8 |
+| `segment_large_corporate`, `segment_mid_market` | One-hot segment flags | from `segment` |
+
+`uplift_series.data.FEATURES` lists the columns a model may use.
+
+Other observed columns: `client_id`, `churn_score` (the existing churn
+model's score), `flagged`, `start_date` (quarterly cycle dates in 2025),
+`treatment` (`none`, `pricing` or `service_fix`) and `churned_6m`.
+
+## Baseline churn (`p0`)
+
+On the log-odds scale, churn risk rises with a higher pricing gap, falling
+transaction volume, complaints and corporate events, and falls with more
+products, longer tenure, larger revenue, more RM meetings and a stronger
+hidden relationship. An intercept is calibrated so that average `p0` is 8%.
+
+## The effect of pricing and the four client types
+
+A pricing negotiation lowers the log-odds of churn by an amount that depends
+on the client:
+
+- **Price-sensitive clients** (high `pricing_gap`): up to a 2.2 log-odds
+  reduction. These are mostly **persuadables**.
+- **Corporate event clients**: almost no effect, because no price reverses a
+  merger decision. Combined with high risk, these are **lost causes**.
+- **Sleeping dogs**: clients priced at or below peers, with no complaints and
+  no price review for five or more years. Raising pricing prompts them to run
+  an RFP, so churn *rises* (an effect of minus 1 log-odds).
+- Everyone else with low risk and little effect is a **sure thing**.
+
+`true_uplift = p0 - p1`, where `p1` is churn probability after pricing.
+Labels in `true_client_type` follow these rules:
+
+| Type | Rule |
+|---|---|
+| persuadable | uplift of at least 5 points |
+| sleeping_dog | uplift of minus 2 points or lower |
+| lost_cause | otherwise, and `p0` of 30% or more |
+| sure_thing | everything else |
+
+A **service fix** lowers churn for clients who have been complaining. It is
+there so Part 3 can show why those clients must not be used as controls.
+
+## Treatment assignment: the switch behind the whole series
+
+`assignment="random"` (Act 2): every eligible flagged client has the same
+chance of getting pricing. This is a clean experiment, and the naive
+comparison of treated and control churn is unbiased.
+
+`assignment="rm_biased"` (Act 3): RMs favour clients they find easy, meaning
+long tenure, frequent meetings and large revenue. They avoid complainers and
+clients in a corporate event. Those clients would have stayed more often
+anyway, so the naive comparison overstates the effect of pricing.
+
+Two parameters control the bias:
+
+- `selection_strength` (default 0.7): how strongly RMs favour easy clients.
+- `hidden_confounding` (default 0.5): how strongly an **unobserved**
+  relationship strength (think "golf with the treasurer") drives both RM
+  choice and churn. Propensity methods using observed features cannot remove
+  this part. Set it to 0 for a world where weighting can fully recover the
+  truth, or raise it to show the limits of weighting.
+
+## Oracle columns (never use as features)
+
+| Column | Meaning |
+|---|---|
+| `hidden_relationship` | Unobserved relationship strength |
+| `true_p_churn_no_action` | `p0` |
+| `true_p_churn_pricing` | `p1` |
+| `true_uplift` | `p0 - p1` |
+| `true_client_type` | Persuadable, sure thing, lost cause or sleeping dog |
+| `true_propensity` | Real probability of being chosen for pricing |
+
+`observed_view(df)` drops them, giving what an analyst would actually see.
+
+## Leakage column (never use as a feature)
+
+`txn_change_after_start` is measured after the start date: clients who left
+stopped transacting. It is included on purpose so Part 3 can show how a
+leaked feature makes a model look perfect and fail in practice.
+
+## Headline numbers (seed 42)
+
+Produced by `python scripts/sanity_report.py`.
+
+| | Random | RM-biased |
+|---|---|---|
+| Flagged clients | 6,000 | 6,000 |
+| Pricing (treated) | 979 | 962 |
+| Service fix (excluded) | 1,000 | 1,000 |
+| No action (control) | 4,021 | 4,038 |
+| Churn among flagged | 20.6% | 20.9% |
+| Treated churn | 14.2% | 8.4% |
+| Control churn | 23.0% | 24.7% |
+| **Naive uplift** | **8.8 points** | **16.3 points** |
+| **True average uplift** | **8.0 points** | **8.0 points** |
+| True no-action risk, treated vs control | 23.4% vs 23.6% | 16.2% vs 25.3% |
+
+Client types among flagged clients: persuadable 61%, sure thing 20%, lost
+cause 13%, sleeping dog 6%.
+
+In the random world, the naive estimate is close to the truth. In the
+RM-biased world it roughly doubles it, because RMs chose clients whose
+no-action churn risk was 16% instead of 25%. That gap is the illusion Part 8
+reveals and Part 9 corrects.
+
+Checks run during development (20 seeds each, default settings) found that
+weighting by an estimated propensity on observed features brings the
+RM-biased estimate down from about 16 points to about 10 points against a
+truth of about 8. The remaining gap comes from the hidden relationship, which
+is the subject of Part 10. With `hidden_confounding=0`, weighting recovers
+the truth to within about a point.
+
+## Using the generator
+
+```python
+from uplift_series import generate_bank, analysis_pool, observed_view
+
+df = generate_bank(assignment="random", seed=42)   # Act 2
+df = generate_bank(assignment="rm_biased", seed=42)  # Act 3
+pool = analysis_pool(df)        # flagged clients with pricing or no action
+seen = observed_view(df)        # without oracle columns
+live = generate_bank(seed=2026)  # a new cohort for "this cycle" in Part 7
+```
